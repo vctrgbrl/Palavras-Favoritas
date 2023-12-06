@@ -74,6 +74,11 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  deleteWord(WordPair word) async {
+    favorites.remove(word);
+    await databaseProvider.db!.delete('favorites', where: 'name = ?', whereArgs: [word.asLowerCase]);
+    notifyListeners();
+  }
 
   void toggleFavorite() async {
     if (favorites.contains(current)) {
@@ -241,19 +246,37 @@ class FavoritesPage extends StatelessWidget {
       );
     }
 
-    return ListView(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text('You have '
-              '${appState.favorites.length} favorites:'),
-        ),
-        for (var pair in appState.favorites)
-          ListTile(
-            leading: Icon(Icons.favorite),
-            title: Text(pair.asLowerCase),
-          ),
-      ],
+    return Consumer<MyAppState>(
+      builder: (context, state, _) {
+        return ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text('You have '
+                  '${appState.favorites.length} favorites:'),
+            ),
+            for (var pair in appState.favorites)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.favorite),
+                      const SizedBox(width: 10,),
+                      Text(pair.asLowerCase),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      state.deleteWord(pair);
+                    }, icon: const Icon(Icons.delete)
+                  )
+                ],
+              ),
+          ],
+        );
+      }
     );
   }
 }
